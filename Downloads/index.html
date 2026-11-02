@@ -1,799 +1,518 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bowling Scorecard</title>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AC Goes Bowling Scorecard</title>
+<style>
+:root{--navy:#1e3a8a;--blue:#2563eb;--blue2:#3b82f6;--edge:#60a5fa;--pale:#bfdbfe;--gold:#facc15;--cream:#fef9c3;--ink:#111827;--grn:#22c55e;--red:#dc2626;--mute:#6b7280}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--navy)}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:16px;line-height:1.2;color:var(--ink);padding:16px;position:relative;min-height:100vh;overflow-x:hidden}
+.board{position:relative;overflow:hidden}
+.wm{position:absolute;left:50%;top:50%;width:min(50%,640px);aspect-ratio:1/1;transform:translate(-50%,-50%);opacity:.2;pointer-events:none;object-fit:contain;z-index:0}
+.board>:not(.wm){position:relative;z-index:1}
+.scroll{overflow-x:auto}
+.wrap{max-width:1200px;margin:0 auto;position:relative}
+.card{background:var(--blue);border:4px solid var(--edge);border-radius:10px;padding:16px}
+.hdr{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;margin-bottom:10px;min-height:80px}
+#name{font-family:inherit;font-size:26px;font-weight:800;color:#fff;background:transparent;border:0;outline:0;width:100%;min-width:0}
+.series{text-align:right;color:#fff}
+.series .l{font-size:13px;color:var(--pale);letter-spacing:.05em}
+#series{font-size:40px;font-weight:800;color:var(--gold)}
+#games{font-size:12px;color:var(--pale);min-height:14px}
+.sheet{display:grid;grid-template-columns:repeat(9,1fr) 1.5fr;min-width:640px;background:#fff}
+.fr{border:2px solid var(--ink);display:flex;flex-direction:column;background:#fff}
+.fr.on{border-color:var(--gold)}
+.fn{text-align:center;font-weight:700;padding:4px 0;border-bottom:2px solid var(--ink)}
+.pd{background:#000;display:flex;justify-content:center;align-items:center;gap:3px;height:36px;cursor:pointer}
+.mini{width:26px;height:26px}
+.mini.s{width:22px;height:22px}
+.bx{display:grid;grid-template-columns:1fr 1fr;border-bottom:2px solid var(--ink)}
+.ten .bx{grid-template-columns:1fr 1fr 1fr}
+.b{border-right:1px solid var(--ink);font-weight:700;font-size:18px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#fff}
+.b:last-child{border-right:0}
+.b:hover{background:#eff6ff}
+.b.ed{box-shadow:inset 0 0 0 3px var(--gold)}
+.sp{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border:2px solid var(--red);border-radius:50%;color:var(--red)}
+.sc{text-align:center;font-weight:800;font-size:22px;height:44px;line-height:44px;background:#fff}
+.fr.on .sc{background:var(--cream)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.pins{background:var(--cream);border-color:var(--ink)}
+h2{font-size:22px;font-weight:700;margin-bottom:6px}
+.pad h2{color:#fff;text-align:center}
+#hint{font-size:14px;color:var(--mute);font-weight:600}
+.rack{position:relative;width:220px;height:214px;margin:18px auto 6px}
+.pin{position:absolute;width:46px;height:46px;border-radius:50%;border:4px solid #9ca3af;background:#d1d5db;color:#6b7280;font-weight:700;font-size:18px;opacity:.55;cursor:pointer}
+.pin.up{background:#fff;border-color:#4b5563;color:var(--ink);opacity:1}
+.pin.cv{background:var(--grn);border-color:#15803d;color:#fff;opacity:1}
+.pin.gone{opacity:.15;cursor:default}
+.pin:disabled{cursor:default}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+.k{background:var(--blue2);color:#fff;border:2px solid #93c5fd;border-radius:8px;font-family:inherit;font-weight:700;font-size:22px;padding:14px 0;cursor:pointer}
+.k:hover:not(:disabled){background:#1d4ed8}
+.k:disabled{background:var(--mute);border-color:#9ca3af;opacity:.45;cursor:not-allowed}
+.btn{width:100%;border:2px solid;border-radius:8px;font-family:inherit;font-weight:700;font-size:17px;padding:12px;color:#fff;cursor:pointer;margin-top:8px}
+.btn:disabled{background:var(--mute)!important;border-color:#9ca3af!important;opacity:.6;cursor:not-allowed}
+.red{background:var(--red);border-color:#f87171}
+.slate{background:#475569;border-color:#94a3b8}
+.green{background:#16a34a;border-color:#4ade80}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.actions{display:flex;justify-content:center;gap:14px;margin-top:16px;flex-wrap:wrap}
+.actions .btn{width:auto;padding:12px 28px;margin:0}
+.players{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;width:100%;margin-top:4px}
+.players .l{color:var(--pale);font-weight:700;font-size:14px;letter-spacing:.05em}
+.pl{border:2px solid #94a3b8;background:#475569;color:#fff;border-radius:8px;font-family:inherit;font-weight:700;font-size:15px;padding:9px 14px;cursor:pointer;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl.on{background:var(--gold);border-color:#fde047;color:var(--ink)}
+.pl.add{background:#16a34a;border-color:#4ade80}
+.pl.rm{background:var(--red);border-color:#f87171}
+.pl:disabled{opacity:.45;cursor:not-allowed}
+[hidden]{display:none!important}
+@media (max-width:760px){.row{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
-  <div id="root"></div>
-  
-  <script type="text/babel">
-    const { useState, useEffect } = React;
-    
-    const RotateCcw = ({ size = 24 }) => (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M1 4v6h6"/>
-        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
-      </svg>
-    );
+<div class="wrap">
+  <section class="card board">
+    <img id="wm" class="wm" alt="" hidden>
+    <div class="hdr">
+      <input id="name" aria-label="Player name" autocomplete="off">
+      <div class="series"><div class="l">SERIES TOTAL</div><div id="series">0</div><div id="games"></div></div>
+    </div>
+    <div class="scroll"><div id="sheet" class="sheet"></div></div>
+  </section>
 
-    const BowlingScorecard = () => {
-      const [playerName, setPlayerName] = useState('PLAYER 1');
-      const [frames, setFrames] = useState(Array(10).fill(null).map(() => ({ balls: [], score: null, isSplit: false, pinLeaves: [] })));
-      const [currentFrame, setCurrentFrame] = useState(0);
-      const [currentBall, setCurrentBall] = useState(0);
-      const [pinLeave, setPinLeave] = useState([]);
-      const [pinLeaveForBall, setPinLeaveForBall] = useState(null);
-      const [seriesTotal, setSeriesTotal] = useState(0);
-      const [gameScores, setGameScores] = useState([]);
-      const [logoUrl, setLogoUrl] = useState(null);
-      const [editMode, setEditMode] = useState({ active: false, frame: null, ball: null });
+  <div class="row">
+    <section class="card pins">
+      <h2>Pin Leave</h2>
+      <div id="hint"></div>
+      <div id="rack" class="rack"></div>
+    </section>
+    <section class="card pad">
+      <h2 id="padTitle"></h2>
+      <div id="keys" class="keys"></div>
+      <button id="splitBtn" class="btn red">Mark as Split</button>
+      <div class="two">
+        <button id="allPins" class="btn slate">All Pins</button>
+        <button id="clearPins" class="btn slate">Clear Pins</button>
+      </div>
+      <div id="liveRow"><button id="undoBtn" class="btn slate">Undo Last Ball</button></div>
+      <div id="editRow" class="two" hidden>
+        <button id="savePins" class="btn green">Save Pins Only</button>
+        <button id="cancelBtn" class="btn slate">Cancel Edit</button>
+      </div>
+    </section>
+  </div>
 
-      useEffect(() => {
-        const savedLogo = localStorage.getItem('bowlingLogo');
-        if (savedLogo) {
-          setLogoUrl(savedLogo);
+  <div class="actions">
+    <button id="nextBtn" class="btn green">Next Game</button>
+    <button id="resetGame" class="btn slate">Reset Game</button>
+    <button id="resetSeries" class="btn red">Reset Series</button>
+    <div id="players" class="players"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const PINS = [7, 8, 9, 10, 4, 5, 6, 2, 3, 1];
+  const MINI = {7:[3,3],8:[9,3],9:[15,3],10:[21,3],4:[6,9],5:[12,9],6:[18,9],2:[9,15],3:[15,15],1:[12,21]};
+  const BIG = {7:[0,0],8:[1,0],9:[2,0],10:[3,0],4:[.5,1],5:[1.5,1],6:[2.5,1],2:[1,2],3:[2,2],1:[1.5,3]};
+  const DEFAULT_LOGO = 'data:image/webp;base64,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';
+  const OLD_KEY = 'acgb-scorecard-v1', KEY = 'acgb-scorecard-v2';
+  const blank = () => Array.from({length: 10}, () => ({balls: [], leaves: [], split: false}));
+
+  const newPlayer = name => ({name, frames: blank(), games: []});
+  let DB = {players: [newPlayer('PLAYER 1')], active: 0};
+  let S = DB.players[0];   // the player currently shown on the overlay
+  let rmArmed = false;     // two-step confirm for Remove Player
+  let edit = null;   // {f, b} when editing a recorded ball
+  let sel = [];      // pins selected on the big rack for the current target ball
+
+  /* ---------- storage (survives a crash or reload mid-stream) ---------- */
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(DB)); } catch (e) {} }
+  const validPlayer = d => d && Array.isArray(d.frames) && d.frames.length === 10;
+  const cleanPlayer = d => ({name: d.name || 'PLAYER', frames: d.frames, games: Array.isArray(d.games) ? d.games : []});
+  function load() {
+    try {
+      const d = JSON.parse(localStorage.getItem(KEY));
+      if (d && Array.isArray(d.players) && d.players.length && d.players.every(validPlayer)) {
+        DB = {players: d.players.map(cleanPlayer), active: Math.min(Math.max(0, d.active | 0), d.players.length - 1)};
+      } else {
+        const old = JSON.parse(localStorage.getItem(OLD_KEY));   // carry over a single-player save
+        if (validPlayer(old)) DB = {players: [cleanPlayer(old)], active: 0};
+      }
+      S = DB.players[DB.active];
+    } catch (e) {}
+    $('wm').src = DEFAULT_LOGO; $('wm').hidden = false;
+  }
+
+  /* ---------- rules ---------- */
+  function done(i, b) {
+    if (i < 9) return b[0] === 10 || b.length === 2;
+    return b.length === 3 || (b.length === 2 && b[0] !== 10 && b[0] + b[1] < 10);
+  }
+  function cursor() {
+    for (let i = 0; i < 10; i++) if (!done(i, S.frames[i].balls)) return {f: i, b: S.frames[i].balls.length};
+    return null;
+  }
+  const target = () => edit || cursor();
+
+  // 'rack' = fresh set of 10 (tap pins left standing); 'conv' = shooting at a leave (tap pins converted)
+  function mode(f, b, balls) {
+    if (b === 0) return 'rack';
+    if (f < 9) return 'conv';
+    if (b === 1) return balls[0] === 10 ? 'rack' : 'conv';
+    if (balls[0] === 10) return balls[1] === 10 ? 'rack' : 'conv';
+    return 'rack';
+  }
+  function earned(f, b, balls) {
+    if (f < 9) return b === 0 || (b === 1 && balls[0] !== 10);
+    if (b <= 1) return true;
+    return b === 2 && (balls[0] === 10 || balls[0] + balls[1] === 10);
+  }
+  // valid score range for ball b given n pins selected on the rack
+  function range(f, b, balls, n) {
+    if (mode(f, b, balls) === 'rack') return [0, 10 - n];
+    return [n, 10 - balls[b - 1]];
+  }
+
+  function sanitize(fi) {
+    const fr = S.frames[fi], b = fr.balls, L = fr.leaves;
+    for (let k = 0; k < b.length; k++) {
+      const [lo, hi] = range(fi, k, b, 0);
+      if (!earned(fi, k, b) || b[k] < lo || b[k] > hi) { b.length = k; L.length = k; break; }
+      if (!L[k]) L[k] = [];
+      const m = mode(fi, k, b);
+      if (m === 'conv' && L[k - 1] && L[k - 1].length) L[k] = L[k].filter(p => L[k - 1].includes(p));
+      if (m === 'rack' && b[k] === 10) L[k] = [];
+    }
+    if (!(fi < 9 && b.length && b[0] < 10)) fr.split = false;
+  }
+
+  function scores() {
+    const rolls = [], start = [];
+    for (let i = 0; i < 10; i++) {
+      start.push(rolls.length);
+      rolls.push(...S.frames[i].balls);
+      if (!done(i, S.frames[i].balls)) break;
+    }
+    const out = Array(10).fill(null);
+    let t = 0;
+    for (let i = 0; i < start.length; i++) {
+      const b = S.frames[i].balls, s = start[i];
+      let v = null;
+      if (i < 9) {
+        if (b[0] === 10) { if (rolls.length > s + 2) v = 10 + rolls[s + 1] + rolls[s + 2]; }
+        else if (b.length === 2) {
+          if (b[0] + b[1] === 10) { if (rolls.length > s + 2) v = 10 + rolls[s + 2]; }
+          else v = b[0] + b[1];
         }
-      }, []);
+      } else if (done(9, b)) v = b[0] + b[1] + (b[2] || 0);
+      if (v === null) break;
+      t += v; out[i] = t;
+    }
+    return out;
+  }
 
-      const handleLogoUpload = (event) => {
-        const file = event.target.files[0];
-        if (file && file.type.startsWith('image/')) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const logoData = e.target.result;
-            setLogoUrl(logoData);
-            localStorage.setItem('bowlingLogo', logoData);
-          };
-          reader.readAsDataURL(file);
-        }
-      };
+  function rackInfo() {
+    const t = target();
+    if (!t) return null;
+    const fr = S.frames[t.f], m = mode(t.f, t.b, fr.balls);
+    let avail = PINS, cap = 10;
+    if (m === 'conv') {
+      const pl = fr.leaves[t.b - 1];
+      avail = pl && pl.length ? pl : PINS;
+      cap = 10 - fr.balls[t.b - 1];
+    }
+    return {t, fr, m, avail, cap};
+  }
 
-      const handleLogoUrl = (url) => {
-        if (url.trim()) {
-          setLogoUrl(url.trim());
-          localStorage.setItem('bowlingLogo', url.trim());
-        }
-      };
+  /* ---------- rendering (runs only on user input, never on a timer) ---------- */
+  function mini(colors, small) {
+    let s = '<svg viewBox="0 0 24 24" class="mini' + (small ? ' s' : '') + '">';
+    for (const p of PINS) {
+      const [x, y] = MINI[p];
+      s += '<circle cx="' + x + '" cy="' + y + '" r="2.3" fill="' + (colors[p] || '#fff') + '"/>';
+    }
+    return s + '</svg>';
+  }
+  function rackColors(fr, a, c) {
+    const col = {}, bl = fr.balls;
+    if (a === null || bl[a] === undefined || bl[a] === 10) return col;
+    const L = fr.leaves[a] || [];
+    if (c !== null && bl[c] !== undefined) {
+      const C = fr.leaves[c] || [];
+      L.forEach(p => { col[p] = C.includes(p) ? '#22c55e' : '#ef4444'; });
+    } else L.forEach(p => { col[p] = '#22c55e'; });
+    return col;
+  }
+  function racksSvg(i) {
+    const fr = S.frames[i], bl = fr.balls;
+    if (i < 9) return mini(rackColors(fr, 0, 1), false);
+    const racks = [];
+    let cur = null;
+    for (let b = 0; b < bl.length; b++) {
+      if (mode(9, b, bl) === 'rack') { cur = {a: b, c: null}; racks.push(cur); }
+      else if (cur) cur.c = b;
+    }
+    const nb = bl.length;
+    if (nb > 0 && nb < 3 && earned(9, nb, bl) && mode(9, nb, bl) === 'rack') racks.push({a: null, c: null});
+    if (!racks.length) racks.push({a: null, c: null});
+    return racks.map(r => mini(rackColors(fr, r.a, r.c), racks.length > 1)).join('');
+  }
+  function mark(i, b) {
+    const bl = S.frames[i].balls;
+    if (i < 9) {
+      if (bl[0] === 10) return b === 1 ? 'X' : '';
+      const v = bl[b];
+      if (v === undefined) return '';
+      if (b === 1 && bl[0] + v === 10) return '/';
+      return v === 0 ? '-' : v;
+    }
+    const v = bl[b];
+    if (v === undefined) return '';
+    if (mode(9, b, bl) === 'rack') return v === 10 ? 'X' : v === 0 ? '-' : v;
+    return bl[b - 1] + v === 10 ? '/' : v === 0 ? '-' : v;
+  }
 
-      const removeLogo = () => {
-        setLogoUrl(null);
-        localStorage.removeItem('bowlingLogo');
-      };
+  function renderSheet() {
+    const sc = scores(), cur = cursor();
+    let h = '';
+    for (let i = 0; i < 10; i++) {
+      const fr = S.frames[i];
+      h += '<div class="fr' + (cur && cur.f === i ? ' on' : '') + (i === 9 ? ' ten' : '') + '">' +
+           '<div class="fn">' + (i + 1) + '</div>' +
+           '<div class="pd" data-pd="' + i + '">' + racksSvg(i) + '</div><div class="bx">';
+      for (let b = 0; b < (i < 9 ? 2 : 3); b++) {
+        const ed = edit && edit.f === i && (edit.b === b || (i < 9 && fr.balls[0] === 10 && b === 1));
+        const m = mark(i, b);
+        const sp = i < 9 && b === 0 && fr.split && m !== '';
+        h += '<div class="b' + (ed ? ' ed' : '') + '" data-b="' + i + ',' + b + '">' +
+             (sp ? '<span class="sp">' + m + '</span>' : m) + '</div>';
+      }
+      h += '</div><div class="sc">' + (sc[i] === null ? '' : sc[i]) + '</div></div>';
+    }
+    $('sheet').innerHTML = h;
+  }
 
-      const calculateScore = (newFrames) => {
-        for (let i = 0; i < 10; i++) {
-          let totalScore = 0;
-          let canCalculate = true;
-          
-          for (let j = 0; j <= i; j++) {
-            const frame = newFrames[j];
-            if (!frame.balls || frame.balls.length === 0) {
-              canCalculate = false;
-              break;
-            }
-            
-            if (j < 9) {
-              if (frame.balls[0] === 10) {
-                const next1 = newFrames[j+1]?.balls?.[0];
-                const next2 = next1 === 10 && j < 8 ? newFrames[j+2]?.balls?.[0] : newFrames[j+1]?.balls?.[1];
-                if (next1 !== undefined && next2 !== undefined) {
-                  totalScore += 10 + next1 + next2;
-                } else {
-                  canCalculate = false;
-                  break;
-                }
-              } else if (frame.balls.length >= 2) {
-                const sum = frame.balls[0] + frame.balls[1];
-                if (sum === 10) {
-                  const next1 = newFrames[j+1]?.balls?.[0];
-                  if (next1 !== undefined) {
-                    totalScore += 10 + next1;
-                  } else {
-                    canCalculate = false;
-                    break;
-                  }
-                } else {
-                  totalScore += sum;
-                }
-              } else {
-                canCalculate = false;
-                break;
-              }
-            } else {
-              const ballCount = frame.balls.length;
-              const needsThirdBall = frame.balls[0] === 10 || (ballCount >= 2 && frame.balls[0] + frame.balls[1] === 10);
-              if (needsThirdBall && ballCount < 3) {
-                canCalculate = false;
-                break;
-              } else if (!needsThirdBall && ballCount < 2) {
-                canCalculate = false;
-                break;
-              } else {
-                totalScore += frame.balls.reduce((sum, ball) => sum + (ball || 0), 0);
-              }
-            }
-          }
-          
-          newFrames[i].score = canCalculate ? totalScore : null;
-        }
-        
-        return newFrames;
-      };
+  function renderRack() {
+    const r = rackInfo();
+    let h = '';
+    for (const p of PINS) {
+      const [x, y] = BIG[p];
+      let cls = 'pin', dis = !r;
+      if (r) {
+        if (r.m === 'rack') { if (sel.includes(p)) cls += ' up'; }
+        else if (!r.avail.includes(p)) { cls += ' gone'; dis = true; }
+        else cls += sel.includes(p) ? ' cv' : ' up';
+      }
+      h += '<button class="' + cls + '" data-p="' + p + '" style="left:' + (x * 58) + 'px;top:' + (y * 56) + 'px"' +
+           (dis ? ' disabled' : '') + '>' + p + '</button>';
+    }
+    $('rack').innerHTML = h;
+    $('hint').textContent = !r ? 'Game complete' : r.m === 'rack' ? 'Tap pins LEFT STANDING' : 'Tap pins CONVERTED';
+  }
 
-      const recordScore = (value) => {
-        const newFrames = [...frames];
-        
-        if (editMode.active) {
-          const { frame: editFrame, ball: editBall } = editMode;
-          if (!newFrames[editFrame].balls) {
-            newFrames[editFrame].balls = [];
-          }
-          newFrames[editFrame].balls[editBall] = value;
-          setFrames(calculateScore(newFrames));
-          setEditMode({ active: false, frame: null, ball: null });
-          return;
-        }
-        
-        if (currentFrame >= 10) return;
-        
-        if (!newFrames[currentFrame].balls) {
-          newFrames[currentFrame].balls = [];
-        }
-        
-        newFrames[currentFrame].balls.push(value);
-        
-        if (!newFrames[currentFrame].pinLeaves) {
-          newFrames[currentFrame].pinLeaves = [];
-        }
-        newFrames[currentFrame].pinLeaves.push([...pinLeave]);
-        
-        setPinLeave([]);
-        setPinLeaveForBall(null);
-        
-        setFrames(calculateScore(newFrames));
-        
-        if (currentFrame < 9) {
-          if (value === 10) {
-            setCurrentFrame(currentFrame + 1);
-            setCurrentBall(0);
-          } else if (currentBall === 1) {
-            setCurrentFrame(currentFrame + 1);
-            setCurrentBall(0);
-          } else {
-            setCurrentBall(1);
-          }
-        } else {
-          if (newFrames[9].balls.length === 3) {
-            setCurrentFrame(10);
-            setCurrentBall(0);
-          } else if (newFrames[9].balls.length === 2) {
-            const earnedThirdBall = newFrames[9].balls[0] === 10 || newFrames[9].balls[0] + newFrames[9].balls[1] === 10;
-            if (!earnedThirdBall) {
-              setCurrentFrame(10);
-              setCurrentBall(0);
-            } else {
-              setCurrentBall(2);
-            }
-          } else {
-            setCurrentBall(1);
-          }
-        }
-      };
+  function renderPad() {
+    const r = rackInfo();
+    $('padTitle').textContent = edit ? 'Editing Frame ' + (edit.f + 1) + ', Roll ' + (edit.b + 1)
+      : r ? 'Frame ' + (r.t.f + 1) + ' - Roll ' + (r.t.b + 1) : 'Game Complete';
+    let lo = 1, hi = 0;
+    if (r) [lo, hi] = range(r.t.f, r.t.b, r.fr.balls, sel.length);
+    let h = '';
+    for (let v = 0; v <= 10; v++) {
+      let lab = v === 0 ? '-' : v;
+      if (r && r.m === 'conv' && v === r.cap) lab = '/';
+      else if (v === 10) lab = 'X';
+      h += '<button class="k" data-v="' + v + '"' + (v < lo || v > hi ? ' disabled' : '') + '>' + lab + '</button>';
+    }
+    $('keys').innerHTML = h;
 
-      const getValidScores = () => {
-        const pinsStanding = pinLeave.length;
-        const pinsDown = 10 - pinsStanding;
-        
-        if (editMode.active) {
-          const frame = frames[editMode.frame];
-          if (editMode.frame === 9) {
-            if (editMode.ball === 0) {
-              return Array.from({ length: 11 }, (_, i) => i);
-            } else if (editMode.ball === 1) {
-              if (frame.balls[0] === 10) {
-                return Array.from({ length: 11 }, (_, i) => i);
-              } else {
-                const pinsLeftAfterBall1 = 10 - frame.balls[0];
-                const pinsMarkedAsConverted = pinsStanding;
-                const validScores = [];
-                for (let i = pinsMarkedAsConverted; i <= pinsLeftAfterBall1; i++) {
-                  validScores.push(i);
-                }
-                return validScores;
-              }
-            } else {
-              const earnedThirdBall = frame.balls[0] === 10 || (frame.balls[0] !== 10 && frame.balls[0] + frame.balls[1] === 10);
-              if (!earnedThirdBall) return [];
-              const freshRack = (frame.balls[0] === 10 && frame.balls[1] === 10) || (frame.balls[0] !== 10 && frame.balls[0] + frame.balls[1] === 10);
-              if (freshRack) {
-                return Array.from({ length: pinsDown + 1 }, (_, i) => i);
-              } else {
-                const pinsMarkedAsConverted = pinsStanding;
-                const pinsLeftAfterBall2 = frame.balls[0] === 10 ? (10 - frame.balls[1]) : 0;
-                const validScores = [];
-                for (let i = pinsMarkedAsConverted; i <= pinsLeftAfterBall2; i++) {
-                  validScores.push(i);
-                }
-                return validScores;
-              }
-            }
-          } else {
-            if (editMode.ball === 0) {
-              return Array.from({ length: pinsDown + 1 }, (_, i) => i);
-            } else {
-              const pinsLeftAfterBall1 = 10 - frame.balls[0];
-              const pinsMarkedAsConverted = pinsStanding;
-              const validScores = [];
-              for (let i = pinsMarkedAsConverted; i <= pinsLeftAfterBall1; i++) {
-                validScores.push(i);
-              }
-              return validScores;
-            }
-          }
-        }
-        
-        if (currentFrame >= 10) return [];
-        
-        if (currentFrame === 9) {
-          const frame = frames[9];
-          if (currentBall === 0) {
-            return Array.from({ length: 11 }, (_, i) => i);
-          } else if (currentBall === 1) {
-            if (frame.balls[0] === 10) {
-              return Array.from({ length: 11 }, (_, i) => i);
-            } else {
-              const pinsLeftAfterBall1 = 10 - frame.balls[0];
-              const isPinLeaveForCurrentBall = pinLeaveForBall === currentBall;
-              let pinsMarkedAsConverted = isPinLeaveForCurrentBall ? pinsStanding : 0;
-              const validScores = [];
-              for (let i = pinsMarkedAsConverted; i <= pinsLeftAfterBall1; i++) {
-                validScores.push(i);
-              }
-              return validScores;
-            }
-          } else {
-            const earnedThirdBall = frame.balls[0] === 10 || (frame.balls[0] !== 10 && frame.balls[0] + frame.balls[1] === 10);
-            if (!earnedThirdBall) return [];
-            const freshRack = (frame.balls[0] === 10 && frame.balls[1] === 10) || (frame.balls[0] !== 10 && frame.balls[0] + frame.balls[1] === 10);
-            if (freshRack) {
-              return Array.from({ length: pinsDown + 1 }, (_, i) => i);
-            } else {
-              const pinsMarkedAsConverted = pinsStanding;
-              const pinsLeftAfterBall2 = frame.balls[0] === 10 ? (10 - frame.balls[1]) : 0;
-              const validScores = [];
-              for (let i = pinsMarkedAsConverted; i <= pinsLeftAfterBall2; i++) {
-                validScores.push(i);
-              }
-              return validScores;
-            }
-          }
-        }
-        
-        if (currentBall === 0) {
-          return Array.from({ length: pinsDown + 1 }, (_, i) => i);
-        } else {
-          const frame = frames[currentFrame];
-          const pinsLeftAfterBall1 = 10 - frame.balls[0];
-          const isPinLeaveForCurrentBall = pinLeaveForBall === currentBall;
-          let pinsMarkedAsConverted = isPinLeaveForCurrentBall ? pinsStanding : 0;
-          const validScores = [];
-          for (let i = pinsMarkedAsConverted; i <= pinsLeftAfterBall1; i++) {
-            validScores.push(i);
-          }
-          return validScores;
-        }
-      };
+    const sf = r && r.t.f < 9 && r.fr.balls.length && r.fr.balls[0] < 10 ? r.fr : null;
+    $('splitBtn').disabled = !sf;
+    $('splitBtn').textContent = sf && sf.split ? 'Split Marked \u2713' : 'Mark as Split';
+    $('allPins').disabled = $('clearPins').disabled = !r;
+    $('editRow').hidden = !edit;
+    $('liveRow').hidden = !!edit;
+    if (edit) {
+      const [l2, h2] = range(edit.f, edit.b, r.fr.balls, sel.length);
+      const v = r.fr.balls[edit.b];
+      $('savePins').disabled = v < l2 || v > h2;
+    }
+    $('undoBtn').disabled = !S.frames.some(f => f.balls.length);
+  }
 
-      const validScores = getValidScores();
-      const isScoreValid = (score) => validScores.includes(score);
+  function render() {
+    renderSheet(); renderRack(); renderPad();
+    $('series').textContent = S.games.reduce((a, g) => a + g, 0);
+    $('games').textContent = S.games.map((g, i) => 'G' + (i + 1) + ' ' + g).join('  |  ');
+    $('nextBtn').disabled = !!cursor();
+    renderPlayers();
+  }
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'})[c]);
+  function renderPlayers() {
+    let h = '<span class="l">PLAYER</span>';
+    DB.players.forEach((p, i) => {
+      h += '<button class="pl' + (i === DB.active ? ' on' : '') + '" data-pl="' + i + '" title="' + esc(p.name) + '">' +
+           (i + 1) + '. ' + esc(p.name || 'PLAYER') + '</button>';
+    });
+    h += '<button class="pl add" data-act="add">+ Add Player</button>' +
+         '<button class="pl rm" data-act="rm"' + (DB.players.length < 2 ? ' disabled' : '') + '>' +
+         (rmArmed ? 'Confirm Remove ' + esc(S.name) + '?' : 'Remove Player') + '</button>';
+    $('players').innerHTML = h;
+  }
 
-      const editBallScore = (frameIdx, ballIdx) => {
-        if (frameIdx < 9 && ballIdx === 1 && frames[frameIdx].balls[0] === 10) return;
-        if (!frames[frameIdx].balls || frames[frameIdx].balls.length <= ballIdx) return;
-        
-        setEditMode({ active: true, frame: frameIdx, ball: ballIdx });
-        
-        if (frames[frameIdx].pinLeaves && frames[frameIdx].pinLeaves[ballIdx]) {
-          setPinLeave([...frames[frameIdx].pinLeaves[ballIdx]]);
-          setPinLeaveForBall(ballIdx);
-        } else {
-          setPinLeave([]);
-          setPinLeaveForBall(null);
-        }
-      };
+  /* ---------- actions ---------- */
+  function record(v) {
+    const r = rackInfo();
+    if (!r) return;
+    const [lo, hi] = range(r.t.f, r.t.b, r.fr.balls, sel.length);
+    if (v < lo || v > hi) return;
+    const fr = r.fr, b = r.t.b;
+    fr.balls[b] = v;
+    if (r.m === 'conv' && v === r.cap && r.avail !== PINS) fr.leaves[b] = r.avail.slice(); // spare: all converted
+    else if (r.m === 'rack' && v === 10) fr.leaves[b] = [];
+    else fr.leaves[b] = sel.slice();
+    sanitize(r.t.f);
+    edit = null; sel = [];
+    save(); render();
+  }
+  function togglePin(p) {
+    const r = rackInfo();
+    if (!r) return;
+    const i = sel.indexOf(p);
+    if (i >= 0) sel.splice(i, 1);
+    else {
+      if (r.m === 'conv' && (!r.avail.includes(p) || sel.length >= r.cap)) return;
+      sel.push(p);
+    }
+    renderRack(); renderPad();
+  }
+  function startEdit(f, b) {
+    edit = {f, b};
+    sel = (S.frames[f].leaves[b] || []).slice();
+    render();
+  }
+  function cancel() { edit = null; sel = []; render(); }
+  function savePins() {
+    if (!edit) return;
+    const fr = S.frames[edit.f], [lo, hi] = range(edit.f, edit.b, fr.balls, sel.length), v = fr.balls[edit.b];
+    if (v < lo || v > hi) return;
+    fr.leaves[edit.b] = sel.slice();
+    sanitize(edit.f);
+    edit = null; sel = [];
+    save(); render();
+  }
+  function undo() {
+    edit = null; sel = [];
+    for (let i = 9; i >= 0; i--) {
+      const fr = S.frames[i];
+      if (fr.balls.length) {
+        fr.balls.pop();
+        fr.leaves.length = fr.balls.length;
+        if (!(i < 9 && fr.balls.length && fr.balls[0] < 10)) fr.split = false;
+        break;
+      }
+    }
+    save(); render();
+  }
+  function switchPlayer(i) {
+    if (i < 0 || i >= DB.players.length) return;
+    DB.active = i; S = DB.players[i];
+    edit = null; sel = []; rmArmed = false;
+    $('name').value = S.name;
+    save(); render();
+  }
+  function addPlayer() {
+    DB.players.push(newPlayer('PLAYER ' + (DB.players.length + 1)));
+    switchPlayer(DB.players.length - 1);
+  }
+  function removePlayer() {
+    if (DB.players.length < 2) return;
+    if (!rmArmed) { rmArmed = true; renderPlayers(); return; }
+    DB.players.splice(DB.active, 1);
+    switchPlayer(Math.min(DB.active, DB.players.length - 1));
+  }
+  function newGame(keepSeries) {
+    if (!keepSeries) S.games = [];
+    S.frames = blank(); edit = null; sel = [];
+    save(); render();
+  }
 
-      const clickPinDiagram = (frameIdx) => {
-        const frame = frames[frameIdx];
-        if (!frame.balls || frame.balls.length === 0) return;
-        
-        let ballToEdit = 0;
-        if (frame.balls[0] === 10) return;
-        else if (frame.balls.length === 1) ballToEdit = 0;
-        else ballToEdit = 1;
-        
-        if (frame.pinLeaves && frame.pinLeaves[ballToEdit]) {
-          setPinLeave([...frame.pinLeaves[ballToEdit]]);
-          setPinLeaveForBall(ballToEdit);
-        } else {
-          setPinLeave([]);
-          setPinLeaveForBall(null);
-        }
-        
-        setEditMode({ active: true, frame: frameIdx, ball: ballToEdit, editingPinLeave: true });
-      };
+  /* ---------- events ---------- */
+  $('sheet').addEventListener('click', e => {
+    const bx = e.target.closest('[data-b]');
+    if (bx) {
+      let [f, b] = bx.dataset.b.split(',').map(Number);
+      const bl = S.frames[f].balls;
+      if (f < 9 && bl[0] === 10) b = 0;
+      if (b >= bl.length) return;
+      if (edit && edit.f === f && edit.b === b) cancel(); else startEdit(f, b);
+      return;
+    }
+    const pd = e.target.closest('[data-pd]');
+    if (pd) {
+      const f = +pd.dataset.pd, bl = S.frames[f].balls;
+      if (bl.length) startEdit(f, bl.length - 1);
+    }
+  });
+  $('rack').addEventListener('click', e => { const p = e.target.closest('[data-p]'); if (p && !p.disabled) togglePin(+p.dataset.p); });
+  $('keys').addEventListener('click', e => { const k = e.target.closest('[data-v]'); if (k && !k.disabled) record(+k.dataset.v); });
+  $('splitBtn').addEventListener('click', () => {
+    const r = rackInfo();
+    if (r && r.t.f < 9 && r.fr.balls.length && r.fr.balls[0] < 10) { r.fr.split = !r.fr.split; save(); render(); }
+  });
+  $('allPins').addEventListener('click', () => {
+    const r = rackInfo();
+    if (!r) return;
+    if (r.m === 'rack') sel = PINS.slice();
+    else if (r.avail.length <= r.cap) sel = r.avail.slice();
+    renderRack(); renderPad();
+  });
+  $('clearPins').addEventListener('click', () => { sel = []; renderRack(); renderPad(); });
+  $('undoBtn').addEventListener('click', undo);
+  $('savePins').addEventListener('click', savePins);
+  $('cancelBtn').addEventListener('click', cancel);
+  $('nextBtn').addEventListener('click', () => {
+    const sc = scores();
+    if (cursor() || sc[9] === null) return;
+    S.games.push(sc[9]);
+    newGame(true);
+  });
+  $('resetGame').addEventListener('click', () => newGame(true));
+  $('resetSeries').addEventListener('click', () => newGame(false));
+  $('name').addEventListener('input', e => { S.name = e.target.value; save(); renderPlayers(); });
+  $('players').addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b || b.disabled) return;
+    if (b.dataset.pl !== undefined) switchPlayer(+b.dataset.pl);
+    else if (b.dataset.act === 'add') addPlayer();
+    else if (b.dataset.act === 'rm') removePlayer();
+  });
+  document.addEventListener('click', e => {   // clicking anywhere else cancels a pending remove
+    if (rmArmed && !e.target.closest('[data-act="rm"]')) { rmArmed = false; renderPlayers(); }
+  });
 
-      const savePinLeaveEdit = () => {
-        if (!editMode.active || !editMode.editingPinLeave) return;
-        
-        const newFrames = [...frames];
-        if (!newFrames[editMode.frame].pinLeaves) {
-          newFrames[editMode.frame].pinLeaves = [];
-        }
-        newFrames[editMode.frame].pinLeaves[editMode.ball] = [...pinLeave];
-        setFrames(newFrames);
-        setEditMode({ active: false, frame: null, ball: null });
-        setPinLeave([]);
-        setPinLeaveForBall(null);
-      };
+  // Keyboard: 0-9, '-' gutter, 'x' strike, '/' spare, Backspace undo, Esc cancel edit
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT') return;
+    const k = e.key;
+    if (k >= '0' && k <= '9' && k.length === 1) record(+k);
+    else if (k === '-') record(0);
+    else if (k === 'x' || k === 'X') record(10);
+    else if (k === '/') { const r = rackInfo(); if (r && r.m === 'conv') record(r.cap); }
+    else if (k === 'Backspace') undo();
+    else if (k === 'Escape') cancel();
+    else return;
+    e.preventDefault();
+  });
 
-      const markAsSplit = () => {
-        if (currentFrame >= 10 || currentBall !== 1) return;
-        const newFrames = [...frames];
-        newFrames[currentFrame].isSplit = true;
-        setFrames(newFrames);
-      };
+  load();
+  $('name').value = S.name;
+  render();
 
-      const nextGame = () => {
-        const finalScore = frames[9]?.score;
-        if (finalScore !== null && finalScore !== undefined) {
-          setGameScores([...gameScores, finalScore]);
-          setSeriesTotal(seriesTotal + finalScore);
-        }
-        resetGame();
-      };
-
-      const resetGame = () => {
-        setFrames(Array(10).fill(null).map(() => ({ balls: [], score: null, isSplit: false, pinLeaves: [] })));
-        setCurrentFrame(0);
-        setCurrentBall(0);
-        setPinLeave([]);
-        setPinLeaveForBall(null);
-      };
-
-      const resetSeries = () => {
-        resetGame();
-        setSeriesTotal(0);
-        setGameScores([]);
-      };
-
-      const renderBallScore = (frameIdx, ballIdx) => {
-        const frame = frames[frameIdx];
-        
-        if (frameIdx < 9) {
-          if (frame.balls[0] === 10) {
-            if (ballIdx === 0) return '';
-            if (ballIdx === 1) return 'X';
-          }
-          
-          const value = frame.balls[ballIdx];
-          if (value === undefined || value === null) return '';
-          
-          if (ballIdx === 0) {
-            if (value === 0) return '-';
-            return value;
-          }
-          if (ballIdx === 1) {
-            if (frame.balls[0] + value === 10) return '/';
-            if (value === 0) return '-';
-            return value;
-          }
-        } else {
-          const value = frame.balls[ballIdx];
-          if (value === undefined || value === null) return '';
-          if (value === 10) return 'X';
-          if (ballIdx > 0 && frame.balls[ballIdx - 1] !== 10 && frame.balls[ballIdx - 1] + value === 10) return '/';
-          if (value === 0) return '-';
-          return value;
-        }
-      };
-
-      const renderPinDiagram = (frameIdx) => {
-        const frame = frames[frameIdx];
-        const pinLayout = [[7,8,9,10], [4,5,6], [2,3], [1]];
-        
-        const renderSinglePinSet = (pinsToShow, color = 'bg-white', small = false) => {
-          return (
-            <div className={`flex flex-col items-center gap-0.5 ${small ? 'scale-75' : ''}`}>
-              {pinLayout.map((row, rowIdx) => (
-                <div key={rowIdx} className="flex gap-0.5">
-                  {row.map(pin => (
-                    <div key={pin} className={`w-1 h-1 rounded-full ${pinsToShow.includes(pin) ? color : 'bg-white'}`} />
-                  ))}
-                </div>
-              ))}
-            </div>
-          );
-        };
-        
-        if (!frame.balls || frame.balls.length === 0) {
-          return renderSinglePinSet([], 'bg-white');
-        }
-        
-        if (frameIdx === 9) {
-          const pinSets = [];
-          
-          if (frame.balls[0] === 10) {
-            pinSets.push(<div key="ball1" className="inline-block">{renderSinglePinSet([], 'bg-white', true)}</div>);
-            
-            if (frame.balls.length === 1) {
-              pinSets.push(<div key="ball2" className="inline-block mx-0.5">{renderSinglePinSet([], 'bg-white', true)}</div>);
-            } else if (frame.balls[1] === 10) {
-              pinSets.push(<div key="ball2" className="inline-block mx-0.5">{renderSinglePinSet([], 'bg-white', true)}</div>);
-              
-              if (frame.balls.length === 2) {
-                pinSets.push(<div key="ball3" className="inline-block mx-0.5">{renderSinglePinSet([], 'bg-white', true)}</div>);
-              } else if (frame.balls.length === 3) {
-                const ball3Leave = frame.pinLeaves && frame.pinLeaves[2] ? frame.pinLeaves[2] : [];
-                pinSets.push(<div key="ball3" className="inline-block mx-0.5">{renderSinglePinSet(ball3Leave, 'bg-green-500', true)}</div>);
-              }
-            } else if (frame.balls.length === 2) {
-              const ball2Leave = frame.pinLeaves && frame.pinLeaves[1] ? frame.pinLeaves[1] : [];
-              pinSets.push(<div key="ball2" className="inline-block mx-0.5">{renderSinglePinSet(ball2Leave, 'bg-green-500', true)}</div>);
-            } else if (frame.balls.length === 3) {
-              const ball2Leave = frame.pinLeaves && frame.pinLeaves[1] ? frame.pinLeaves[1] : [];
-              const ball3Leave = frame.pinLeaves && frame.pinLeaves[2] ? frame.pinLeaves[2] : [];
-              const converted = ball2Leave.filter(pin => !ball3Leave.includes(pin));
-              const unconverted = ball2Leave.filter(pin => ball3Leave.includes(pin));
-              
-              const combinedPins = [...converted.map(p => ({ pin: p, color: 'bg-green-500' })), ...unconverted.map(p => ({ pin: p, color: 'bg-red-500' }))];
-              const pinColors = {};
-              combinedPins.forEach(({ pin, color }) => pinColors[pin] = color);
-              
-              pinSets.push(
-                <div key="ball2" className="inline-block mx-0.5">
-                  <div className="flex flex-col items-center gap-0.5 scale-75">
-                    {pinLayout.map((row, rowIdx) => (
-                      <div key={rowIdx} className="flex gap-0.5">
-                        {row.map(pin => (
-                          <div key={pin} className={`w-1 h-1 rounded-full ${pinColors[pin] || 'bg-white'}`} />
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            }
-          } else if (frame.balls.length >= 1) {
-            const ball1Leave = frame.pinLeaves && frame.pinLeaves[0] ? frame.pinLeaves[0] : [];
-            if (frame.balls.length === 1) {
-              pinSets.push(<div key="ball1" className="inline-block">{renderSinglePinSet(ball1Leave, 'bg-green-500', true)}</div>);
-            } else {
-              const ball2Leave = frame.pinLeaves && frame.pinLeaves[1] ? frame.pinLeaves[1] : [];
-              const converted = ball1Leave.filter(pin => !ball2Leave.includes(pin));
-              const unconverted = ball1Leave.filter(pin => ball2Leave.includes(pin));
-              
-              const combinedPins = [...converted.map(p => ({ pin: p, color: 'bg-green-500' })), ...unconverted.map(p => ({ pin: p, color: 'bg-red-500' }))];
-              const pinColors = {};
-              combinedPins.forEach(({ pin, color }) => pinColors[pin] = color);
-              
-              pinSets.push(
-                <div key="ball1" className="inline-block">
-                  <div className="flex flex-col items-center gap-0.5 scale-75">
-                    {pinLayout.map((row, rowIdx) => (
-                      <div key={rowIdx} className="flex gap-0.5">
-                        {row.map(pin => (
-                          <div key={pin} className={`w-1 h-1 rounded-full ${pinColors[pin] || 'bg-white'}`} />
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-              
-              if (frame.balls[0] + frame.balls[1] === 10) {
-                if (frame.balls.length === 2) {
-                  pinSets.push(<div key="ball3" className="inline-block mx-0.5">{renderSinglePinSet([], 'bg-white', true)}</div>);
-                } else if (frame.balls.length === 3) {
-                  const ball3Leave = frame.pinLeaves && frame.pinLeaves[2] ? frame.pinLeaves[2] : [];
-                  pinSets.push(<div key="ball3" className="inline-block mx-0.5">{renderSinglePinSet(ball3Leave, 'bg-green-500', true)}</div>);
-                }
-              }
-            }
-          }
-          
-          return <div className="flex items-center justify-center">{pinSets}</div>;
-        }
-        
-        if (frame.balls[0] === 10) {
-          return renderSinglePinSet([], 'bg-white');
-        } else if (frame.balls.length === 1 && frame.pinLeaves && frame.pinLeaves[0]) {
-          const pinsLeft = frame.pinLeaves[0];
-          return renderSinglePinSet(pinsLeft, 'bg-green-500');
-        } else if (frame.balls.length === 2 && frame.pinLeaves && frame.pinLeaves[0] && frame.pinLeaves[1]) {
-          const firstBallLeave = frame.pinLeaves[0];
-          const secondBallLeave = frame.pinLeaves[1];
-          const converted = firstBallLeave.filter(pin => !secondBallLeave.includes(pin));
-          const unconverted = firstBallLeave.filter(pin => secondBallLeave.includes(pin));
-          
-          const combinedPins = [...converted.map(p => ({ pin: p, color: 'bg-green-500' })), ...unconverted.map(p => ({ pin: p, color: 'bg-red-500' }))];
-          const pinColors = {};
-          combinedPins.forEach(({ pin, color }) => pinColors[pin] = color);
-          
-          return (
-            <div className="flex flex-col items-center gap-0.5">
-              {pinLayout.map((row, rowIdx) => (
-                <div key={rowIdx} className="flex gap-0.5">
-                  {row.map(pin => (
-                    <div key={pin} className={`w-1 h-1 rounded-full ${pinColors[pin] || 'bg-white'}`} />
-                  ))}
-                </div>
-              ))}
-            </div>
-          );
-        }
-        
-        return renderSinglePinSet([], 'bg-white');
-      };
-
-      return (
-        <div className="min-h-screen bg-gradient-to-b from-blue-800 to-blue-900 p-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="bg-blue-600 border-4 border-blue-400 rounded-lg p-4 mb-4 relative overflow-hidden">
-              {logoUrl && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-                  <img 
-                    src={logoUrl} 
-                    alt="AC Goes Bowling Background" 
-                    className="opacity-25"
-                    style={{ 
-                      width: '60%', 
-                      height: 'auto', 
-                      objectFit: 'contain',
-                      mixBlendMode: 'darken'
-                    }}
-                  />
-                </div>
-              )}
-              
-              <div className="relative z-10">
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={playerName}
-                      onChange={(e) => setPlayerName(e.target.value)}
-                      className="text-2xl font-bold text-white bg-transparent border-none outline-none"
-                    />
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-blue-200">SERIES TOTAL</div>
-                    <div className="text-4xl font-bold text-yellow-400">{seriesTotal}</div>
-                  </div>
-                </div>
-              
-              <div className="grid gap-0 bg-white" style={{ gridTemplateColumns: 'repeat(9, 1fr) 1.5fr' }}>
-                {frames.map((frame, frameIdx) => {
-                  const isActive = frameIdx === currentFrame;
-                  return (
-                    <div key={frameIdx} className={`border-2 ${isActive ? 'border-yellow-400 bg-yellow-100' : 'border-gray-800'}`}>
-                      <div className="text-center font-bold border-b-2 border-gray-800 py-1 bg-white">
-                        {frameIdx + 1}
-                      </div>
-                      <div className="flex justify-center py-1 bg-black cursor-pointer" onClick={() => clickPinDiagram(frameIdx)}>
-                        {renderPinDiagram(frameIdx)}
-                      </div>
-                      <div className="grid grid-cols-2 border-b-2 border-gray-800">
-                        {frameIdx < 9 ? (
-                          <>
-                            <div 
-                              onClick={() => editBallScore(frameIdx, 0)}
-                              className={`border-r border-gray-800 text-center py-2 font-bold bg-white relative cursor-pointer hover:bg-blue-50 ${frame.isSplit ? 'text-red-600' : ''} ${editMode.active && editMode.frame === frameIdx && editMode.ball === 0 ? 'ring-4 ring-yellow-400' : ''}`}>
-                              {renderBallScore(frameIdx, 0)}
-                              {frame.isSplit && frame.balls[0] && (
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                  <div className="w-6 h-6 border-2 border-red-600 rounded-full"></div>
-                                </div>
-                              )}
-                            </div>
-                            <div 
-                              onClick={() => editBallScore(frameIdx, 1)}
-                              className={`text-center py-2 font-bold bg-white cursor-pointer hover:bg-blue-50 ${editMode.active && editMode.frame === frameIdx && editMode.ball === 1 ? 'ring-4 ring-yellow-400' : ''}`}>
-                              {renderBallScore(frameIdx, 1)}
-                            </div>
-                          </>
-                        ) : (
-                          <div className="border-r border-gray-800 text-center py-2 font-bold bg-white col-span-2 grid grid-cols-3">
-                            <div 
-                              onClick={() => editBallScore(frameIdx, 0)}
-                              className={`border-r border-gray-800 cursor-pointer hover:bg-blue-50 ${editMode.active && editMode.frame === frameIdx && editMode.ball === 0 ? 'ring-4 ring-yellow-400' : ''}`}>
-                              {renderBallScore(frameIdx, 0)}
-                            </div>
-                            <div 
-                              onClick={() => editBallScore(frameIdx, 1)}
-                              className={`border-r border-gray-800 cursor-pointer hover:bg-blue-50 ${editMode.active && editMode.frame === frameIdx && editMode.ball === 1 ? 'ring-4 ring-yellow-400' : ''}`}>
-                              {renderBallScore(frameIdx, 1)}
-                            </div>
-                            <div 
-                              onClick={() => editBallScore(frameIdx, 2)}
-                              className={`cursor-pointer hover:bg-blue-50 ${editMode.active && editMode.frame === frameIdx && editMode.ball === 2 ? 'ring-4 ring-yellow-400' : ''}`}>
-                              {renderBallScore(frameIdx, 2)}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-center py-3 font-bold text-lg bg-white">
-                        {frame.score !== null && frame.score !== undefined ? frame.score : ''}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-yellow-100 border-4 border-gray-800 rounded-lg p-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Pin Leave</h2>
-                <div className="flex justify-center items-center h-64">
-                  <div className="relative" style={{ width: '200px', height: '200px' }}>
-                    {[
-                      { pin: 7, x: 50, y: 20 },
-                      { pin: 8, x: 90, y: 20 },
-                      { pin: 9, x: 130, y: 20 },
-                      { pin: 10, x: 170, y: 20 },
-                      { pin: 4, x: 70, y: 70 },
-                      { pin: 5, x: 110, y: 70 },
-                      { pin: 6, x: 150, y: 70 },
-                      { pin: 2, x: 90, y: 120 },
-                      { pin: 3, x: 130, y: 120 },
-                      { pin: 1, x: 110, y: 170 }
-                    ].map(({ pin, x, y }) => {
-                      const isStanding = pinLeave.includes(pin);
-                      return (
-                        <div
-                          key={pin}
-                          onClick={() => {
-                            if (isStanding) {
-                              setPinLeave(pinLeave.filter(p => p !== pin));
-                            } else {
-                              setPinLeave([...pinLeave, pin].sort());
-                            }
-                            setPinLeaveForBall(currentBall);
-                          }}
-                          className={`absolute w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg border-4 cursor-pointer ${
-                            isStanding 
-                              ? 'bg-white border-gray-600 text-gray-800' 
-                              : 'bg-gray-300 border-gray-400 text-gray-500 opacity-50'
-                          }`}
-                          style={{ left: `${x}px`, top: `${y}px` }}
-                        >
-                          {pin}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-blue-600 border-4 border-blue-400 rounded-lg p-6">
-                <h2 className="text-2xl font-bold text-white mb-4 text-center">
-                  {editMode.active 
-                    ? (editMode.editingPinLeave 
-                        ? `Editing Pin Leave - Frame ${editMode.frame + 1}, Ball ${editMode.ball + 1}`
-                        : `Editing Frame ${editMode.frame + 1}, Ball ${editMode.ball + 1}`)
-                    : `Frame ${currentFrame + 1} - Roll ${currentBall + 1}`}
-                </h2>
-                <div className="grid grid-cols-4 gap-3 mb-4">
-                  <button
-                    onClick={() => recordScore(0)}
-                    disabled={(currentFrame >= 10 && !editMode.active) || !isScoreValid(0)}
-                    className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-lg text-xl border-2 border-blue-300"
-                  >
-                    -
-                  </button>
-                  {[1,2,3,4,5,6,7,8,9].map(num => (
-                    <button
-                      key={num}
-                      onClick={() => recordScore(num)}
-                      disabled={(currentFrame >= 10 && !editMode.active) || !isScoreValid(num)}
-                      className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-lg text-xl border-2 border-blue-300"
-                    >
-                      {num}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => recordScore(10)}
-                    disabled={(currentFrame >= 10 && !editMode.active) || !isScoreValid(10)}
-                    className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-lg text-xl border-2 border-blue-300"
-                  >
-                    X
-                  </button>
-                </div>
-                {editMode.active && editMode.editingPinLeave ? (
-                  <button
-                    onClick={savePinLeaveEdit}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-lg text-xl border-2 border-green-400"
-                  >
-                    Save Pin Leave
-                  </button>
-                ) : editMode.active ? (
-                  <button
-                    onClick={() => setEditMode({ active: false, frame: null, ball: null })}
-                    className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded-lg text-xl border-2 border-gray-400"
-                  >
-                    Cancel Edit
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      onClick={markAsSplit}
-                      disabled={currentFrame >= 10 || currentBall !== 1 || frames[currentFrame]?.isSplit}
-                      className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-500 text-white font-bold py-4 rounded-lg text-xl border-2 border-red-400 mb-3"
-                    >
-                      {frames[currentFrame]?.isSplit ? 'Split Marked ✓' : 'Mark as Split'}
-                    </button>
-                    <button
-                      onClick={() => setPinLeave([1,2,3,4,5,6,7,8,9,10])}
-                      className="w-full bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 rounded-lg border-2 border-slate-400"
-                    >
-                      Reset All Pins
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="flex justify-center gap-4 mt-4">
-              <button 
-                onClick={() => {
-                  const url = prompt('Enter image URL (e.g., https://i.imgur.com/yourimage.png):');
-                  if (url) handleLogoUrl(url);
-                }}
-                className="cursor-pointer bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-lg text-xl border-2 border-purple-400"
-              >
-                {logoUrl ? 'Change Logo (URL)' : 'Set Logo URL'}
-              </button>
-              <label className="cursor-pointer bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-8 rounded-lg text-xl border-2 border-purple-300">
-                Upload Logo (File)
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleLogoUpload}
-                  className="hidden"
-                />
-              </label>
-              <button
-                onClick={nextGame}
-                className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-xl border-2 border-green-400"
-              >
-                Next Game
-              </button>
-              <button
-                onClick={resetGame}
-                className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-lg text-xl border-2 border-gray-400 flex items-center gap-2"
-              >
-                <RotateCcw size={24} />
-                Reset Game
-              </button>
-              <button
-                onClick={resetSeries}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg text-xl border-2 border-red-400"
-              >
-                Reset Series
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    };
-
-    ReactDOM.render(<BowlingScorecard />, document.getElementById('root'));
-  </script>
+})();
+</script>
 </body>
 </html>
