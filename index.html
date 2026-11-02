@@ -526,10 +526,17 @@ html.strip .wrap{position:absolute;left:0;top:0;width:1200px;max-width:none;marg
   function fit() {
     const now = isStrip();
     if (now !== strip) { strip = now; applyMode(); return; }
-    const w = $('wrap'), W = 1200;
-    if (!strip) { w.style.transform = ''; return; }
-    const H = w.offsetHeight, k = Math.min(innerWidth / W, innerHeight / H);
-    w.style.transform = 'translate(' + (innerWidth - W * k) / 2 + 'px,' + (innerHeight - H * k) / 2 + 'px) scale(' + k + ')';
+    const w = $('wrap');
+    if (!strip) { w.style.transform = ''; w.style.width = ''; return; }
+    // reshape the card to the box's proportions (frames widen or narrow), then scale it to fill the box
+    w.style.transform = ''; w.style.width = '1200px';
+    let H = w.offsetHeight;
+    const W = Math.max(720, innerWidth * H / innerHeight);
+    w.style.width = W + 'px';
+    H = w.offsetHeight;
+    const kx = innerWidth / W, ky = innerHeight / H;
+    if (W > 720) w.style.transform = 'scale(' + kx + ',' + ky + ')';   // fills exactly; kx and ky are near-equal
+    else { const k = Math.min(kx, ky); w.style.transform = 'translate(0,' + (innerHeight - H * k) / 2 + 'px) scale(' + k + ')'; }
   }
   function applyMode() {
     document.documentElement.classList.toggle('strip', strip);
