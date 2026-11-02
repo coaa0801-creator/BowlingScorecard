@@ -67,12 +67,15 @@ h2{font-size:22px;font-weight:700;margin-bottom:6px}
 .pl.add{background:#16a34a;border-color:#4ade80}
 .pl.rm{background:var(--red);border-color:#f87171}
 .pl:disabled{opacity:.45;cursor:not-allowed}
+html.strip,html.strip body{background:transparent;padding:0;margin:0;height:100%;min-height:0;overflow:hidden}
+html.strip .row,html.strip .actions{display:none}
+html.strip .wrap{position:absolute;left:0;top:0;width:1200px;max-width:none;margin:0;transform-origin:0 0}
 [hidden]{display:none!important}
 @media (max-width:760px){.row{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" id="wrap">
   <section class="card board">
     <img id="wm" class="wm" alt="" hidden>
     <div class="hdr">
@@ -130,7 +133,11 @@ h2{font-size:22px;font-weight:700;margin-bottom:6px}
   let sel = [];      // pins selected on the big rack for the current target ball
 
   /* ---------- storage (survives a crash or reload mid-stream) ---------- */
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(DB)); } catch (e) {} }
+  function save() {
+    if (typeof strip !== 'undefined' && strip) return;
+    try { localStorage.setItem(KEY, JSON.stringify(DB)); } catch (e) {}
+    if (typeof publish === 'function') publish();
+  }
   const validPlayer = d => d && Array.isArray(d.frames) && d.frames.length === 10;
   const cleanPlayer = d => ({name: d.name || 'PLAYER', frames: d.frames, games: Array.isArray(d.games) ? d.games : []});
   function load() {
@@ -508,9 +515,75 @@ h2{font-size:22px;font-weight:700;margin-bottom:6px}
     e.preventDefault();
   });
 
+  /* ---------- one URL, two looks ----------
+     A wide, short box (like a phone streaming-app layer) shows only the scorecard strip and
+     follows the scores sent from the laptop. A normal window shows the full page and sends. */
+  const TOPIC = 'https://ntfy.sh/acgb-s1ey3c93zu320bqf4duko5h4';
+  const forced = new URLSearchParams(location.search).get('view');
+  const isStrip = () => forced ? forced === 'strip' : (innerWidth / innerHeight >= 3 || innerHeight < 250);
+  var strip = isStrip(), listening = false, remote = false;
+
+  function fit() {
+    const now = isStrip();
+    if (now !== strip) { strip = now; applyMode(); return; }
+    const w = $('wrap'), W = 1200;
+    if (!strip) { w.style.transform = ''; return; }
+    const H = w.offsetHeight, k = Math.min(innerWidth / W, innerHeight / H);
+    w.style.transform = 'translate(' + (innerWidth - W * k) / 2 + 'px,' + (innerHeight - H * k) / 2 + 'px) scale(' + k + ')';
+  }
+  function applyMode() {
+    document.documentElement.classList.toggle('strip', strip);
+    if (strip) listen();
+    fit();
+  }
+  addEventListener('resize', fit);
+
+  // sending (full page): only the shown player's game, at most every 1.5 s
+  let sendTimer = null, lastSent = 0;
+  function publish() {
+    if (strip) return;
+    clearTimeout(sendTimer);
+    sendTimer = setTimeout(() => {
+      let body = JSON.stringify({v: 1, p: S});
+      if (body.length > 3900) body = JSON.stringify({v: 1, p: Object.assign({}, S, {frames: S.frames.map(f => ({balls: f.balls, leaves: [], split: f.split}))})});
+      lastSent = Date.now();
+      try { fetch(TOPIC, {method: 'POST', body}).catch(() => {}); } catch (e) {}
+    }, Math.max(300, 1500 - (Date.now() - lastSent)));
+  }
+
+  // receiving (overlay strip)
+  function show(text) {
+    try {
+      const d = JSON.parse(text);
+      if (!d || d.v !== 1 || !d.p || !Array.isArray(d.p.frames) || d.p.frames.length !== 10) return;
+      S = {name: d.p.name || '', frames: d.p.frames, games: Array.isArray(d.p.games) ? d.p.games : []};
+      remote = true; edit = null; sel = [];
+      $('name').value = S.name;
+      render(); fit();
+    } catch (e) {}
+  }
+  function latest() {
+    if (typeof fetch !== 'function') return;
+    fetch(TOPIC + '/json?poll=1&since=latest').then(r => r.text()).then(t => {
+      const lines = t.trim().split('\n').filter(Boolean);
+      for (const l of lines) { try { const m = JSON.parse(l); if (m.event === 'message') show(m.message); } catch (e) {} }
+    }).catch(() => {});
+  }
+  function listen() {
+    if (listening) return;
+    listening = true;
+    latest();
+    try {
+      const es = new EventSource(TOPIC + '/sse');
+      es.onopen = latest;                        // catch up after any reconnect
+      es.onmessage = e => { try { const m = JSON.parse(e.data); if (m.event === 'message') show(m.message); } catch (x) {} };
+    } catch (e) {}
+  }
+
   load();
   $('name').value = S.name;
   render();
+  applyMode();
 
 })();
 </script>
