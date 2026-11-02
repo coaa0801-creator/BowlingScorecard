@@ -69,7 +69,8 @@ h2{font-size:22px;font-weight:700;margin-bottom:6px}
 .pl:disabled{opacity:.45;cursor:not-allowed}
 html.strip,html.strip body{background:transparent;padding:0;margin:0;height:100%;min-height:0;overflow:hidden}
 html.strip .row,html.strip .actions{display:none}
-html.strip .wrap{position:absolute;left:0;top:0;width:1200px;max-width:none;margin:0;transform-origin:0 0}
+html.strip body{display:flex;align-items:center;justify-content:center}
+html.strip .wrap{flex:none;width:1200px;max-width:none;margin:0}
 [hidden]{display:none!important}
 @media (max-width:760px){.row{grid-template-columns:1fr}}
 </style>
@@ -527,17 +528,15 @@ html.strip .wrap{position:absolute;left:0;top:0;width:1200px;max-width:none;marg
     const now = isStrip();
     if (now !== strip) { strip = now; applyMode(); return; }
     const w = $('wrap');
-    if (!strip) { w.style.transform = ''; w.style.width = ''; return; }
-    // reshape the card to the box's proportions (frames widen or narrow), then scale it to fill the box
-    w.style.transform = ''; w.style.width = '1200px';
+    if (!strip) { w.style.zoom = ''; w.style.width = ''; return; }
+    // reshape the card toward the box's proportions (720 to 1700 wide), then zoom it to fill.
+    // zoom (not transform) re-lays out text and lines at the final size, so they stay sharp.
+    w.style.zoom = 1; w.style.width = '1200px';
     let H = w.offsetHeight;
-    // between 720 and 1700 wide the card reshapes to the box and fills it; outside that it keeps a sane shape and centers
-    const want = innerWidth * H / innerHeight, W = Math.min(1700, Math.max(720, want));
+    const W = Math.min(1700, Math.max(720, innerWidth * H / innerHeight));
     w.style.width = W + 'px';
     H = w.offsetHeight;
-    const kx = innerWidth / W, ky = innerHeight / H;
-    if (want >= 720 && want <= 1700) w.style.transform = 'scale(' + kx + ',' + ky + ')';
-    else { const k = Math.min(kx, ky); w.style.transform = 'translate(' + (innerWidth - W * k) / 2 + 'px,' + (innerHeight - H * k) / 2 + 'px) scale(' + k + ')'; }
+    w.style.zoom = Math.min(innerWidth / W, innerHeight / H);
   }
   function applyMode() {
     document.documentElement.classList.toggle('strip', strip);
