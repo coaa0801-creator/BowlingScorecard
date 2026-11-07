@@ -520,7 +520,9 @@ html.strip .wrap{position:absolute;left:0;top:0;width:1200px;max-width:none;marg
      follows the scores sent from the laptop. A normal window shows the full page and sends. */
   const TOPIC = 'https://ntfy.sh/acgb-s1ey3c93zu320bqf4duko5h4';
   const forced = new URLSearchParams(location.search).get('view');
-  const isStrip = () => forced ? forced === 'strip' : (innerWidth / innerHeight >= 3 || innerHeight < 250);
+  // Android apps that show web pages (PRISM, Streamlabs Mobile) send "; wv)" in their user agent; laptop browsers never do
+  const inPhoneApp = /;\s*wv\)/.test(navigator.userAgent);
+  const isStrip = () => forced ? forced === 'strip' : (inPhoneApp || innerWidth / innerHeight >= 3 || innerHeight < 250);
   var strip = isStrip(), listening = false, remote = false;
 
   function fit() {
@@ -536,7 +538,14 @@ html.strip .wrap{position:absolute;left:0;top:0;width:1200px;max-width:none;marg
     w.style.width = W + 'px';
     H = w.offsetHeight;
     const kx = innerWidth / W, ky = innerHeight / H;
-    if (want >= 720 && want <= 1700) w.style.transform = 'scale(' + kx + ',' + ky + ')';
+    if (innerWidth / innerHeight < 3) {
+      // a big box (e.g. a full-screen widget): draw the scorecard as a band across the top, at most a quarter of
+      // the box's height, centered; everything else stays see-through so the camera shows
+      w.style.width = '1200px'; H = w.offsetHeight;
+      const k = Math.min(innerWidth * 0.98 / 1200, innerHeight * 0.25 / H);
+      w.style.transform = 'translate(' + (innerWidth - 1200 * k) / 2 + 'px,' + Math.round(innerHeight * 0.02) + 'px) scale(' + k + ')';
+    }
+    else if (want >= 720 && want <= 1700) w.style.transform = 'scale(' + kx + ',' + ky + ')';
     else { const k = Math.min(kx, ky); w.style.transform = 'translate(' + (innerWidth - W * k) / 2 + 'px,' + (innerHeight - H * k) / 2 + 'px) scale(' + k + ')'; }
   }
   function applyMode() {
